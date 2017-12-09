@@ -26,7 +26,7 @@ LEFT_DOWN = 0
 RIGHT_DOWN = 0
 UP_DOWN = 0
 DOWN_DOWN = 0
-
+ndt = 0
 
 class Grass:
     def __init__(self):
@@ -34,7 +34,8 @@ class Grass:
         self.x, self.y = 400, 300
         self.x2, self.y2 = 400, 900
 
-    def update(self):
+    def update(self, frame_time
+               ):
         self.y -= 1
         if self.y < -300:
             self.y = 900
@@ -98,18 +99,18 @@ def collide(a, b):
 
 
 def update(frame_time):
-    roket.update()
-    grass.update()
-    enemy.update()
-    for i in range(36):
+    roket.update(frame_time)
+    grass.update(frame_time)
+    enemy.update(frame_time)
+    for i in range(108):
         if collide(enemy.bullet[i], roket):
             print("collide")
-            game_framework.push_state(pause_state)
+            #print(enemy.ndt)
+            #game_framework.push_state(pause_state)
     for i in range(15):
         if collide(roket.missiles[i], enemy):
             roket.missiles[i].on = 0
     delay(0.01)
-
 
 
 def draw(frame_time):
@@ -125,7 +126,7 @@ def draw_main_scene():
     enemy.draw_bb()
     for i in range(15):
         roket.missiles[i].draw_bb()
-    for i in range(36):
+    for i in range(108):
         enemy.bullet[i].draw_bb()
 
 

@@ -9,7 +9,7 @@ class Roket:
         #self.image = load_image('run_animation.png')
         self.image = load_image('rocket.png')
         self.dir = 1
-        self.speed = 5
+        self.speed = 3
         self.LEFT_DOWN = 0
         self.RIGHT_DOWN = 0
         self.UP_DOWN = 0
@@ -18,7 +18,7 @@ class Roket:
         self.missiles = [Missile() for i in range(15)]
         self.index = 0
 
-    def update(self):
+    def update(self, frame_time):
         if self.LEFT_DOWN == 1 and self.x > 0:
             self.x -= self.speed
         if self.RIGHT_DOWN == 1and self.x < 800:
@@ -29,7 +29,7 @@ class Roket:
             self.y -= self.speed
         for i in range(15):
             if self.missiles[i].on:
-                self.missiles[i].y += self.speed * 2
+                self.missiles[i].y += self.speed * 3
             else:
                 self.missiles[i].x, self.missiles[i].x = -50, -50
 
