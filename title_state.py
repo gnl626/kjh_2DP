@@ -5,11 +5,15 @@ from pico2d import *
 
 name = "TitleState"
 image = None
+bgm = None
 
 
 def enter():
-    global image
-    image = load_image('title.png')
+    global image, bgm
+    image = load_image('title2.png')
+    bgm = load_music('Fight_or_Flight.mp3')
+    bgm.set_volume(32)
+    bgm.repeat_play()
 
 
 def exit():
@@ -17,7 +21,7 @@ def exit():
     del(image)
 
 
-def handle_events():
+def handle_events(frame_time):
     events = get_events()
     for event in events:
         if event.type == SDL_QUIT:
@@ -30,9 +34,9 @@ def handle_events():
 
 
 
-def draw():
+def draw(frame_time):
     clear_canvas()
-    image.draw(400, 300)
+    image.draw(400, 300, 800, 600)
     update_canvas()
 
 
@@ -40,7 +44,7 @@ def draw():
 
 
 
-def update():
+def update(frame_time):
     pass
 
 

@@ -7,8 +7,10 @@ from pico2d import *
 import game_framework
 import title_state
 import pause_state
+import win_state
 from roket import Roket
 from enemy import Enemy
+from boss import Boss
 
 name = "MainState"
 
@@ -16,8 +18,13 @@ grass = None
 font = None
 roket = None
 enemy = None
+enemys = None
+boss = None
 play = 1
 num = 0
+count = 0
+immortal = 0
+immortalCount = 0
 numcount = 0
 PAUSED = None
 boyX = 0
@@ -26,20 +33,24 @@ LEFT_DOWN = 0
 RIGHT_DOWN = 0
 UP_DOWN = 0
 DOWN_DOWN = 0
+ndtPlus = 0
 ndt = 0
+hit_sound = None
 
 class Grass:
     def __init__(self):
         self.image = load_image('bluesky.bmp')
         self.x, self.y = 400, 300
         self.x2, self.y2 = 400, 900
+        #self.bgm = load_music('Fight_or_Flight.mp3')
+        #self.bgm.set_volume(64)
+        #self.bgm.repeat_play()
 
-    def update(self, frame_time
-               ):
-        self.y -= 1
+    def update(self, frame_time):
+        self.y -= 5
         if self.y < -300:
             self.y = 900
-        self.y2 -= 1
+        self.y2 -= 5
         if self.y2 < -300:
             self.y2 = 900
 
@@ -51,18 +62,23 @@ class Grass:
 
 
 def enter():
-    global  grass, PAUSED, roket, enemy
+    global  grass, PAUSED, roket, enemy, enemys, boss, hit_sound
     grass = Grass()
     roket = Roket()
-    enemy = Enemy()
+    enemys = [Enemy() for i in range (8)]
+    boss = Boss()
     PAUSED = load_image("you_died.jpg")
+    hit_sound = load_wav('Slap_with_Glove2.wav')
+    hit_sound.set_volume(32)
 
 
 def exit():
-    global grass, roket, enemy
+    global grass, roket, enemy, boss, enemys
     del(grass)
     del(roket)
     del(enemy)
+    del(boss)
+    del(enemys)
 
 
 
@@ -82,6 +98,8 @@ def handle_events(frame_time):
             game_framework.quit()
         elif event.type == SDL_KEYDOWN and event.key == SDLK_p:
             game_framework.push_state(pause_state)
+        elif event.type == SDL_KEYDOWN and event.key == SDLK_w:
+            game_framework.push_state(win_state)
         else:
             roket.handle_event(event)
 
@@ -96,21 +114,83 @@ def collide(a, b):
 
     return True
 
-
+#ndtPlus = 23
 
 def update(frame_time):
+    global enemy, count, immortal, ndt, ndtPlus, immortalCount
+    count += 1
+    ndtPlus += frame_time
+    ndt = round(ndtPlus, 1)
+    #print(ndt)
     roket.update(frame_time)
     grass.update(frame_time)
-    enemy.update(frame_time)
+    #enemy.update(frame_time)
+    if  ndt > 1 and ndt < 12:
+        enemys[0].update(frame_time)
+        enemys[1].update(frame_time)
+        if collide(enemys[0], enemys[1]):
+            enemys[0].startX = enemys[0].startX - 100
+    elif ndt > 12 and ndt < 22:
+        enemys[2].update(frame_time)
+        enemys[3].update(frame_time)
+        if collide(enemys[2], enemys[3]):
+            enemys[2].startX = enemys[2].startX - 100
+    elif ndt > 24 and ndt < 36:
+        enemys[4].update(frame_time)
+        enemys[5].update(frame_time)
+        if collide(enemys[4], enemys[5]):
+            enemys[4].startX = enemys[4].startX - 100
+    elif ndt > 36 and ndt < 48:
+        enemys[6].update(frame_time)
+        enemys[7].update(frame_time)
+        if collide(enemys[6], enemys[7]):
+            enemys[6].startX = enemys[6].startX - 100
+    elif ndt > 48:
+        boss.update(frame_time)
+        #enemys[8].update(frame_time)
+    #for i in range(8):
+        #enemys[i].update(frame_time)
     for i in range(108):
-        if collide(enemy.bullet[i], roket):
+        for j in range(8):
+            if collide(enemys[j].bullet[i], roket) and immortal == 0:
+                print("collide")
+                roket.heart -= 1
+                immortal = 1
+                #game_framework.push_state(pause_state)
+    for i in range(324):
+        if collide(boss.bullet[i], roket) and immortal == 0:
             print("collide")
-            #print(enemy.ndt)
-            #game_framework.push_state(pause_state)
+            roket.heart -= 1
+            immortal = 1
+
+    if immortal:
+        immortalCount += frame_time
+    if immortalCount > 2:
+        immortal = 0
+        immortalCount = 0
+
+    if roket.heart == -1:
+        roket.heart = 5
+        #game_framework.push_state(pause_state)
+
     for i in range(15):
-        if collide(roket.missiles[i], enemy):
+        for j in range(8):
+            if collide(roket.missiles[i], enemys[j]) and enemys[j].on:
+                roket.missiles[i].on = 0
+                enemys[j].HP -= 1
+                roket.hit_enemy(enemys[j])
+                #enemys[j].hit()
+        if collide(roket.missiles[i], boss) and ndt > 48:
             roket.missiles[i].on = 0
-    delay(0.01)
+            boss.HP -= 1
+            roket.hit_enemy(boss)
+
+    if boss.HP == 0:
+        game_framework.push_state(win_state)
+    print(boss.HP)
+    print(ndt)
+
+
 
 
 def draw(frame_time):
@@ -119,15 +199,29 @@ def draw(frame_time):
     update_canvas()
 
 def draw_main_scene():
+    global ndt, immortal
     grass.draw()
-    roket.draw()
-    enemy.draw()
-    roket.draw_bb()
-    enemy.draw_bb()
-    for i in range(15):
-        roket.missiles[i].draw_bb()
-    for i in range(108):
-        enemy.bullet[i].draw_bb()
+    #boss.draw_bb()
+    if immortal == 0:
+        roket.draw()
+    if immortal and count % 2 == 0:
+        roket.draw()
+    #enemy.draw()
+    if ndt < 12:
+        enemys[0].draw()
+        enemys[1].draw()
+    elif ndt > 12 and ndt < 24:
+        enemys[2].draw()
+        enemys[3].draw()
+    elif ndt > 24 and ndt < 36:
+        enemys[4].draw()
+        enemys[5].draw()
+    elif ndt > 36 and ndt < 48:
+        enemys[6].draw()
+        enemys[7].draw()
+    elif ndt > 48:
+        boss.draw()
+
 
 
 

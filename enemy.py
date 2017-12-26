@@ -7,42 +7,57 @@ from pico2d import *
 
 class Enemy:
     image = None
+    hit_sound = None
     PI = 3.141592654
 
 
     def __init__(self):
-        self.x, self.y = random.randint(200, 700), 500
-        self.index = -50
-        self.count = 350
-        self.HP = 50
-        self.ndt = 0
+        #self.x, self.y = random.randint(200, 700), 500
+        self.x, self.y = -50, 500
+        self.startX = random.randint(200, 700)
+        self.startY = 500
+        self.on = 0
+        self.HP = 2
+        self.operate = 1
+        self.ndt = 0.1
+        self.ndtPlus = 0.1
         self.scunt = 0
         self.bullet = [Bullet() for i in range(108)]
+
+            #ppself.hit_sound.play()
         if Enemy.image == None:
             Enemy.image = load_image('twitter.png')
 
     def update(self, frame_time):
-        self.ndt += frame_time
-        if self.ndt > 12:
-            self.ndt = 0
-            for i in range(108):
-                self.bullet[i].on = 0
-        print(self.ndt)
+        self.x = self.startX
+        self.y = self.startY
+        self.on = 1
+        if self.startX > 400:
+            self.startX += frame_time * 60
+        if self.startX <= 400:
+            self.startX -= frame_time * 60
+        self.ndtPlus += frame_time
+        self.ndt = round(self.ndtPlus, 1)
+
+        #print(self.ndt)
         #if(0>= )
-        self.index += 1
-        self.count += 1
-        if self.index == 400:
-            self.index = 0
-            self.x = random.randint(200, 700)
-        self.fire()
+        if self.operate == 1:
+            self.fire()
+        if self.HP <= 0 or self.ndt >= 12:
+            self.operate = 0
+            self.on = 0
         for i in range(108):
-            if (self.bullet[i].on):
-                self.bullet[i].x += math.cos(self.bullet[i].angle) * self.bullet[i].speed
-                self.bullet[i].y += math.sin(self.bullet[i].angle) * self.bullet[i].speed
-            if self.bullet[i].x < 0 or self.x > 800 or self.bullet[i].y < 0 or self.bullet[i].y > 600:
+            if self.bullet[i].on:
+                self.bullet[i].x += math.cos(self.bullet[i].angle) * self.bullet[i].speed * frame_time * 50
+                self.bullet[i].y += math.sin(self.bullet[i].angle) * self.bullet[i].speed * frame_time * 50
+            if self.bullet[i].x < 0 or self.bullet[i].x > 800 or self.bullet[i].y < 0 or self.bullet[i].y > 600:
                 #self.bullet[i].on = 0
                 self.bullet[i].x = - 50
                 self.bullet[i].y = - 50
+        if self.operate == 0:
+            self.x = 0
+            self.y = -50
+            #self.index += 1
 
 
 
@@ -65,7 +80,7 @@ class Enemy:
         draw_rectangle(*self.get_bb())
 
     def fire(self):
-        if self.ndt >= 5:
+        if self.ndt % 1 == 0:
             for i in range(36):
                 if self.bullet[i].on == 1:
                     continue
@@ -74,7 +89,7 @@ class Enemy:
                 self.bullet[i].x = math.cos(self.bullet[i].angle) + self.x
                 self.bullet[i].y = -math.sin(self.bullet[i].angle)  + self.y
 
-        if self.ndt > 6.5:
+        if self.ndt % 2 == 0:
             for i in range(36, 72):
                 if self.bullet[i].on == 1:
                     continue
@@ -83,7 +98,7 @@ class Enemy:
                 self.bullet[i].x = math.cos(self.bullet[i].angle) + self.x
                 self.bullet[i].y = -math.sin(self.bullet[i].angle) + self.y
 
-        if self.ndt > 8:
+        if self.ndt % 3 == 0:
             for i in range(72, 108):
                 if self.bullet[i].on == 1:
                     continue
@@ -91,6 +106,12 @@ class Enemy:
                 self.bullet[i].angle = (math.pi * 3 / 2) + i * 36
                 self.bullet[i].x = math.cos(self.bullet[i].angle) + self.x
                 self.bullet[i].y = -math.sin(self.bullet[i].angle) + self.y
+
+    def __delete__(self):
+        del(self)
+
+    def hit(self):
+        self.hit_sound.play()
 
 
 class Bullet:
